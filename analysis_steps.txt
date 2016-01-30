@@ -1,0 +1,4 @@
+- filter out all days for each site where daily pm10 < 150
+- plot total number of times per year that a site registered a daily pm10 > 150, 
+  displayed by site (plot1)
+- 
