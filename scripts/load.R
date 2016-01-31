@@ -2,7 +2,7 @@ library(dplyr)
 library(lubridate)
 library(ggplot2)
 
-site_list <- c("AP", "DS", "FR", "KE", "LP", "LT", "OL", "SC")
+site_list=c("AP", "DS", "FR", "KE", "LP", "LT", "OL", "SC")
 df1 <- data.frame(site=c(), date=c(), wd=c(), teom=c(), wdf=c(), olteom=c()) 
 for (i in site_list){
   temp <- read.csv(paste0("./data-raw/", i, "_all.csv"))
@@ -30,5 +30,5 @@ daily_teom <- df1 %>% group_by(year, day, site) %>%
   summarize(pm10 = sum(olteom)/24)
 exceed_df <- filter(daily_teom, pm10 > 150)
 
-write.csv(daily_teom, file="./data/daily_teom.csv")
-write.csv(exceed_df, file="./data/exceeds.csv")
+write.csv(daily_teom, file="./data/daily_pm10.csv")
+write.csv(exceed_df, file="./data/exceed_pm10.csv")
