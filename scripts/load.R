@@ -2,7 +2,7 @@ library(dplyr)
 library(lubridate)
 library(ggplot2)
 
-site_list=c("AP", "DS", "FR", "KE", "LP", "LT", "OL", "SC")
+site_list=c("AP", "DS", "FR", "KE", "LP", "LT", "MI", "NB", "OL", "SC")
 df1 <- data.frame(site=c(), date=c(), wd=c(), teom=c(), wdf=c(), olteom=c()) 
 for (i in site_list){
   temp <- read.csv(paste0("./data-raw/", i, "_all.csv"))
