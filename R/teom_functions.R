@@ -33,3 +33,13 @@ pull_mfile_data<- function(date1, date2){
   mfile_df
 }
 
+#' strip legend from ggplot object
+#' 
+#' @param a.gplot ggplot object.
+#' @return A grob of the plot legend
+g_legend<-function(a.gplot){ 
+  tmp <- ggplot_gtable(ggplot_build(a.gplot)) 
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box") 
+  legend <- tmp$grobs[[leg]] 
+  return(legend)
+} 
