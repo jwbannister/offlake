@@ -98,7 +98,21 @@ geom_label(data=label_data, mapping=aes(x=x, y=y, label=daily.pm10,
                                         color=flag),
            nudge_x=1000, nudge_y=1000)
   }
-  p5 <- p5 + ggtitle(format(as.Date(i), "%m-%d-%Y"))
+  dcas <- dcm_polys %>% 
+    inner_join(select(dcm_labels, dcm, objectid), by="objectid") %>%
+    filter(dcm %in% c("T1A-4", "T32-2a", "T37-2b", "T1A-2a"))
+  lbls <- filter(dcm_labels, dcm %in% c("T1A-4", "T32-2a", "T37-2b", "T1A-2a"))
+  lbls[lbls$dcm=="T37-2b", ]$dcm <- "T37-2"
+  p5 <- p5 + ggtitle(format(as.Date(i), "%m-%d-%Y")) +
+    geom_polygon(data=dcas, 
+                 mapping=aes(x=x, y=y, group=objectid), size=.2, 
+                             fill="grey62", color="black") +
+    geom_text(data=filter(lbls, dcm=="T37-2"), 
+              mapping=aes(x=x, y=y, label=dcm), nudge_y=-2000, nudge_x=500) +
+    geom_text(data=filter(lbls, dcm=="T1A-2a"), 
+              mapping=aes(x=x, y=y, label=dcm), nudge_y=-1500, nudge_x=700) +
+    geom_text(data=filter(lbls, dcm=="T1A-4"), 
+              mapping=aes(x=x, y=y, label=dcm), nudge_y=-2300) 
   png(filename=paste0("~/dropbox/offshore_exceedences/",
                       format(as.Date(i), "%m-%d-%Y"), 
                       "_roses.png"), width=6, height=8, units="in", res=300)
