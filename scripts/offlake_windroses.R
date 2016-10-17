@@ -13,7 +13,8 @@ mfile_sites <- c("LonePine", "Keeler", "NorthBch", "LizardTl",
 mfile_df <- query_owenslake(paste0("SELECT site, datetime, dir, 
                          aspd, teom, qaqc_level_id  
                          FROM archive.mfile_data 
-                         WHERE datetime::date='2016-10-16';")) 
+                         WHERE datetime BETWEEN '2016-10-16 01:00:00' 
+                         AND '2016-10-17 00:00:00';"))
 mfile_df <- filter(mfile_df, site %in% mfile_sites)
 
 instrument_deployments <- c("Lone Pine", "Keeler", "North Beach", "Lizard Tail", 
