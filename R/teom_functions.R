@@ -13,21 +13,20 @@
 #' @return Data frame.
 #' @examples
 #' pull_mfile_wind("2016-02-01", "2016-03-01")
-pull_mfile_data<- function(date1, date2){
+pull_teom_data<- function(date1, date2){
   print("pulling wind and pm10 data from archive.mfile_data...")
   mfile_df <- 
-    query_owenslake(paste0("SELECT i.deployment, d.datetime, d.dir, d.aspd, 
-                           d.teom, d.qaqc_level_id, i.easting_utm, 
-                           i.northing_utm
+    query_owens_aws(paste0("SELECT d.site, d.datetime, d.dir, 
+                           d.aspd, d.teom, d.qaqc_level_id,  
+                           i.easting_utm, i.northing_utm
                            FROM archive.mfile_data d
                            JOIN instruments.deployments i
-                           ON d.deployment_id=i.deployment_id
+                           ON d.site=i.deployment
                            WHERE datetime > timestamp '", date1, 
                            "' AND datetime < timestamp '", date2, "';"))
-  if (sum(!is.na(mfile_df$qaqc_level_id))>0) print("QA/QC failures in data!")
-  mfile_df <- mfile_df[is.na(mfile_df$qaqc_level_id), ]
-  mfile_df <- select(mfile_df, deployment, datetime,  wd = dir, ws = aspd, 
-                     pm10.avg=teom, x=easting_utm, y=northing_utm)
+  mfile_df <- select(mfile_df, site, datetime,  wd = dir, 
+                     ws = aspd, pm10.avg=teom, x=easting_utm, 
+                     y=northing_utm)
   # remove duplicated data lines (problem in database)
   mfile_df <- mfile_df[!duplicated(mfile_df[ , -1]), ]
   mfile_df
