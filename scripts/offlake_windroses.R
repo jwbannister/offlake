@@ -1,62 +1,43 @@
 load_all()
 load_all("~/code/owensData")
-load_all("~/analysis/Rowens")
-load_all("~/analysis/windroseR")
+load_all("~/code/owensMaps")
+load_all("~/code/Roses")
 library(lubridate)
 library(dplyr)
 library(ggplot2)
 library(rgdal)
 
+dat <- mdy('11-16-2016')
 mfile_sites <- c("LonePine", "Keeler", "NorthBch", "LizardTl", 
                     "MillSite", "ShellCut", "DirtySox", 
                     "Olancha", "Stanley")
-mfile_df <- query_owenslake(paste0("SELECT site, datetime, dir, 
-                         aspd, teom, qaqc_level_id  
-                         FROM archive.mfile_data 
-                         WHERE datetime BETWEEN '2016-10-16 01:00:00' 
-                         AND '2016-10-17 00:00:00';"))
-mfile_df <- filter(mfile_df, site %in% mfile_sites)
-
-instrument_deployments <- c("Lone Pine", "Keeler", "North Beach", "Lizard Tail", 
-                    "Mill Site", "Shell Cut", "Dirty Socks", 
-                    "Olancha", "Stanley")
-deploy_df <- query_owenslake(paste0("SELECT deployment, easting_utm, 
-                                   northing_utm
-                         FROM instruments.deployments;"))
-deploy_df <- filter(deploy_df, deployment %in% instrument_deployments)                         
-deploy_df$deployment <- factor(deploy_df$deployment, levels=instrument_deployments, 
-                               labels=mfile_sites)
-mfile_df <- left_join(mfile_df, deploy_df, by=c("site"="deployment"))
-names(mfile_df)[1] <- "deployment"
-names(mfile_df)[7:8] <- c("x", "y")
-
-mfile_sum <- mfile_df %>% distinct(deployment, x, y)
-p1 <- ggplot() +
-  geom_path(data=shoreline_poly, mapping=aes(x=x, y=y)) +
-  geom_point(data=mfile_sum, mapping=aes(x=x, y=y)) +
-  geom_text(data=mfile_sum, mapping=aes(x=x, y=y, label=deployment)) +
-  coord_equal()
+query1 <- paste0("SELECT i.deployment, m.site, m.datetime, m.dir, m.aspd, ",
+                 "m.teom, m.qaqc_level_id, ", 
+                 "st_y(st_transform(i.geom, 26911)) AS y, ",
+                 "st_x(st_transform(i.geom, 26911)) AS x ",
+                 "FROM archive.mfile_data m JOIN instruments.deployments i ",
+                 "ON m.deployment_id=i.deployment_id ",
+                 "WHERE (m.datetime - ('1 second')::interval)::date='",
+                 dat, "'::date AND m.site IN ('", 
+                 paste0(mfile_sites, collapse="', '"), "')")
+mfile_df <- query_owens(query1)
+site_labels <- mfile_df %>% distinct(deployment, x, y)
   
-mfile_df$date <- '2016-10-16'
-daily_summary <- mfile_df %>% group_by(date, deployment) %>%
+daily_summary <- mfile_df %>% group_by(deployment) %>%
   summarize(daily.pm10=round(sum(teom, na.rm=T)/24, 0))
-daily_summary$flag <- sapply(daily_summary$daily.pm10, 
-                             function(x) ifelse(x>150, "red", "white"))
-violations <- mfile_df %>% group_by(date, deployment) %>%
-  summarize(daily.pm10=round(sum(teom, na.rm=T)/24, 0)) %>% 
-  filter(daily.pm10>150) 
+daily_summary$exceed <- sapply(daily_summary$daily.pm10, 
+                             function(x) ifelse(x>150, T, F))
 
 buffer <- 4000
-p3 <- ggplot(shoreline_poly, aes(x=x, y=y)) +
+p3 <- ggplot() +
   coord_equal() +
-  geom_path() +
-  geom_point(data=mfile_sum, mapping=aes(x=x, y=y))
+  geom_path(data=shoreline$polygons, mapping=aes(x=x, y=y, group=objectid)) +
+  geom_point(data=site_labels, mapping=aes(x=x, y=y))
 info <- ggplot_build(p3)
 xrange <- info[[2]]$ranges[[1]]$x.range
 yrange <- info[[2]]$ranges[[1]]$y.range
 valueseq <- c(10, 50, 100, 150)
-legend.plot <- mfile_df %>% filter(date==violations$date[1], 
-                                   deployment==violations$deployment[1]) %>%
+legend.plot <- mfile_df %>% filter(deployment==mfile_df$deployment[1]) %>%
 plot_rose(., value='teom', dir='dir', valueseq=valueseq,
           legend.title="PM10")
 legnd <- g_legend(legend.plot)
